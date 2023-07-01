@@ -25,9 +25,26 @@ const char* ntpServer = "0.br.pool.ntp.org";
 const long gmtOffset_sec = -10800;
 const int daylightOffset_sec = 0;
 
+#define TRIG 2
+#define ECHO 4
+#define TURB 35
+
+// GLOBAIS
+int nivel_turbidez = 0;
+float nivel_agua = 0;
 void setup() {
   Serial.begin(115200);
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
+  pinMode(TURB, INPUT);
+
+  //pinMode(TURB, INPUT);
   xTaskCreate(conectar_wifi, "conectar_wifi", 2048, NULL, 1, NULL);
+  xTaskCreate(receber_nivel_turbidez, "receber turbidez", 10000, NULL, 1, NULL);
+  xTaskCreate(receber_nivel_agua, "receber ultrassonico", 2048, NULL, 1, NULL);
+
+
+  //xTaskCreate(sensorHC, "tarefa1", 10000, NULL, 1, NULL);
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
@@ -35,11 +52,54 @@ void loop() {
 
   if (WiFi.status() == WL_CONNECTED && !Firebase.ready()) {
     conectar_firebase();
+    delay(1000);
   }
+  //Serial.println(analogRead(13));
 
-  if (Firebase.ready() && (millis() - sendDataPrevMillis > 30000 || sendDataPrevMillis == 0)) {
+  delay(1000);
+
+
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > 3000 || sendDataPrevMillis == 0)) {
     sendDataPrevMillis = millis();
-    Serial.printf("Set string... %s\n", Firebase.RTDB.setInt(&fbdo, ("/nivel_agua/" + receber_data_hora()), (rand() % 100)) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set string... %s\n", Firebase.RTDB.setFloat(&fbdo, ("/nivel_agua/" + receber_data_hora()), nivel_agua) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set string... %s\n", Firebase.RTDB.setInt(&fbdo, F("/nivel_turbidez/"), nivel_turbidez) ? "ok" : fbdo.errorReason().c_str());
+  }
+}
+
+void receber_nivel_agua(void* params) {
+
+  while (1) {
+    int distancia;
+    digitalWrite(TRIG, LOW);
+    delayMicroseconds(2);
+    digitalWrite(TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG, LOW);
+    unsigned long tempoSom = pulseIn(ECHO, HIGH);
+    nivel_agua = (tempoSom / 58) / 100;
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
+}
+
+void receber_nivel_turbidez(void* params) {
+  while (1) {
+    int media_turb = 0;
+    for (int i = 0; i < 100; i++) {
+      media_turb += analogRead(TURB);
+    }
+    media_turb /= 100;
+    Serial.println(media_turb);
+
+    if (media_turb >= 400 && media_turb <= 2100) {
+      nivel_turbidez = map(media_turb, 400, 2100, 100, 0);
+    } else if (media_turb < 400) {
+      nivel_turbidez = map(400, 400, 2100, 100, 0);
+    } else if (media_turb > 2100) {
+      nivel_turbidez = map(2100, 400, 2100, 100, 0);
+    }
+    Serial.println(nivel_turbidez);
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 
