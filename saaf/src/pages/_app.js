@@ -1,7 +1,10 @@
-import Grafico from "./Grafico"
+import NivelAgua from "./NivelAgua"
+import NivelTurbidez from "./NivelTurbidez"
+
 export default function App({ Component, pageProps }) {
   return (<>
-    <Grafico/>
+    <NivelAgua/>
+    <NivelTurbidez />
     
     </>
   )

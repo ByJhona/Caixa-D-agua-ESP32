@@ -25,7 +25,7 @@ export const options = {
   
 };
 
-export default function Grafico() {
+export default function NivelAgua() {
   
   const [nivelAgua, setNivelAgua] = useState([]);
 
