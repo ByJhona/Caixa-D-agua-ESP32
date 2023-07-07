@@ -12,16 +12,16 @@ export const dataDefault = [
 
 export const options = {
   title: "Nivel de Agua no Reservatorio",
-  hAxis: { title: "Tempo(Dias)", titleTextStyle: { color: "#333" }, viewWindowMode: 'explicit',
+  hAxis: { title: "Tempo(Dias)", titleTextStyle: { color: "#333" },
   viewWindow: {
     min: 0
   } },
-  vAxis: { title: "Litros(L)",minValue: 0 , viewWindowMode: 'explicit',
+  vAxis: { title: "Litros(L)",minValue: 0 ,
   viewWindow: {
     max: 100,
     min: 0
   }},
-  chartArea: { width: "70%", height: "40%" },
+  chartArea: { width: "80%", height: "60%" },
   
 };
 

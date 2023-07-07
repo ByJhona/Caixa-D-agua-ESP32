@@ -1,0 +1,44 @@
+.nav{
+    width: 100%;
+    height: 4rem;
+    background-color: rgb(255, 255, 255);
+   display: flex;
+   justify-content:space-between;
+   padding: 1rem;
+   border-bottom: solid 1px rgb(201, 201, 201);
+}
+
+.body{
+    display: flex;
+
+    width: 100%;
+    height: 90vh;
+    
+    
+    background-color: rgba(223, 223, 223, 0.623);
+}
+
+.info{
+    display: flex;
+    justify-content: space-around;
+width: 90%;
+height: 70vh;
+margin-top: 3rem;
+}
+
+.nivelagua{
+    width: 70%;
+    height: 20rem;
+    border: solid 1px rgb(202, 202, 202);
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.nivelturbidez{
+    background-color: rgb(255, 255, 255);
+    width: 20%;
+    height: 20rem;
+    border: solid 1px rgb(202, 202, 202);
+    border-radius: 1rem;
+    overflow: hidden;
+}

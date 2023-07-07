@@ -11,8 +11,8 @@ export const dataDefault = [
 ];
 
 export const options = {
-    width: 400,
-    height: 120,
+    width: "100%",
+    height: "100%",
     redFrom: 90,
     redTo: 100,
     yellowFrom: 65,
@@ -46,7 +46,7 @@ export default function NivelTurbidez() {
     <Chart
       chartType="Gauge"
       width="100%"
-      height="600px"
+      height="100%"
       data={nivelTurbidez}
       options={options}
     />

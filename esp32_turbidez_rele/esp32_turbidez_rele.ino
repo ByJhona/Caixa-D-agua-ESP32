@@ -68,7 +68,7 @@ void receber_nivel_turbidez(void* params) {
 
 void conectar_firebase(void* params) {
   while (1) {
-    if (WiFi.status() == WL_CONNECTED) {
+    if (WiFi.status() == WL_CONNECTED && !Firebase.ready()) {
       Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
       /* Assign the api key (required) */
       config.api_key = API_KEY;
@@ -86,6 +86,7 @@ void conectar_firebase(void* params) {
       config.timeout.serverResponse = 1000;
       vTaskSuspend(NULL);
     }
+    vTaskDelay(1000);
   }
 }
 
