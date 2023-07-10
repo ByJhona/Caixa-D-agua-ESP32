@@ -23,6 +23,7 @@ export const options = {
 export default function NivelTurbidez() {
   
   const [nivelTurbidez, setNivelTurbidez] = useState([]);
+  
 
   useEffect(() => {
     
@@ -41,7 +42,7 @@ export default function NivelTurbidez() {
   }, []);
     return (
       <>
-        
+       
     
     <Chart
       chartType="Gauge"

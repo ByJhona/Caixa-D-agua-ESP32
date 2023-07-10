@@ -1,4 +1,5 @@
 #include <WiFi.h>
+#include "ESPAsyncWebServer.h"
 #include <string.h>
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>
@@ -6,8 +7,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+
 #define WIFI_NOME "OI"
 #define WIFI_SENHA "12345678j"
+#define AP_NOME "ESP_32_PROJECT"
+#define AP_SENHA "123456789"
 #define TEMPO_ESPERA_MAXIMO_WIFI 20000
 #define TEMPO_DELAY_TASK 3000
 
@@ -18,6 +22,10 @@
 FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
+AsyncWebServer server(80);
+
+
+
 
 #define TURB 35
 
@@ -27,8 +35,11 @@ int nivel_turbidez = 0;
 void setup() {
   Serial.begin(115200);
   pinMode(TURB, INPUT);
+  WiFi.mode(WIFI_MODE_APSTA);
 
   xTaskCreatePinnedToCore(conectar_wifi, "conectar_wifi", 2048, NULL, 5, NULL, 1);
+  xTaskCreatePinnedToCore(criar_ap, "conectar AP", 2048, NULL, 5, NULL, 0);
+
   xTaskCreatePinnedToCore(conectar_firebase, "Conectar ao firebase", 10000, NULL, 4, NULL, 0);
   xTaskCreatePinnedToCore(receber_nivel_turbidez, "receber turbidez", 10000, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(enviar_fb_nivel_turbidez, "Envia Turbidez", 10000, NULL, 2, NULL, 0);
@@ -100,6 +111,7 @@ void conectar_wifi(void* params) {
     Serial.print("Conectando-se ao WiFi");
     WiFi.begin(WIFI_NOME, WIFI_SENHA);
 
+
     unsigned long TEMPO_ESPERA_ATUAL_WIFI = millis();
     // Essa função while pode ficar em loop, tentar limitar com um tempo limite
     while (WiFi.status() != WL_CONNECTED && (millis() - TEMPO_ESPERA_ATUAL_WIFI < TEMPO_ESPERA_MAXIMO_WIFI)) {
@@ -114,5 +126,16 @@ void conectar_wifi(void* params) {
     Serial.println("Conectado!!");
     Serial.print("Connected com IP: ");
     Serial.println();
+  }
+}
+
+void criar_ap(void* params) {
+  while (1) {
+  
+    WiFi.softAP(AP_NOME, AP_SENHA);
+    Serial.println("OH MDS OBG CHATGPT");
+
+    vTaskDelay(60000);
+    vTaskDelete(NULL);
   }
 }
