@@ -1,0 +1,182 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="refresh" content="2"><title>SAAF</title>
+</head>
+<style>
+    * {
+        color: #433939;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        justify-content: center;
+    }
+
+    body {
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 95vw;
+        background-size: auto;
+        background-color: rgb(247, 247, 247);
+    }
+
+    .nav {
+        width: 90vw;
+        height: 4rem;
+        background-color: rgb(255, 255, 255);
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem;
+        border: solid 1px rgb(201, 201, 201);
+        border-radius: 0 0 1rem 1rem;
+
+    }
+
+    .botoes {
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: row;
+        
+        justify-content: space-between;
+    }
+
+    .botao-liga {
+        border: solid 1px rgb(202, 202, 202);
+        border-radius: 1rem;
+
+        background-color: rgb(40, 219, 16);
+        border: none;
+        width: 10rem;
+        height: 4rem;
+    }
+
+    .botao-desliga {
+        border: solid 1px rgb(202, 202, 202);
+        border-radius: 1rem;
+
+        background-color: rgb(231, 95, 95);
+        border: none;
+        width: 10rem;
+        height: 4rem;
+    }
+
+    .info {
+        display: flex;
+
+        justify-content: space-around;
+        flex-direction: column;
+        align-items: center;
+        width: 80vw;
+        height: 90vh;
+        margin-top: 3rem;
+        margin-bottom: 3rem;
+    }
+
+    .niveis {
+        width: 70vw;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+
+    }
+
+    .nivel-agua {
+        display: flex;
+        align-items: center;
+        
+        font-size: 10rem;
+        width: 30vw;
+        height: 16rem;
+        border: solid 1px rgb(202, 202, 202);
+        background-color: rgb(255, 255, 255);
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .nivel-turbidez {
+        display: flex;
+        align-items: center;
+        font-size: 10rem;
+        width: 30vw;
+        height: 16rem;
+        border: solid 1px rgb(202, 202, 202);
+        background-color: rgb(255, 255, 255);
+
+        border-radius: 1rem;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 700px) {
+        .niveis {
+
+            flex-direction: column;
+
+
+        }
+
+        .nivel-agua {
+        
+        width: 70vw;
+        
+        
+    }
+    .botoes {
+        
+        display: flex;
+        flex-direction: row;
+        width: 70vw;
+        justify-content: space-between;
+        
+    }
+
+    .nivel-turbidez {
+        
+        width: 70vw;
+        
+    }
+    }
+</style>
+
+<body>
+    <div class="nav">
+        <h2>SAAF</h2>
+        <h2>DASHBOARD</h2>
+    </div>
+    </div>
+
+    <div class="info">
+        <div class="botoes">
+
+            <button class="botao-liga" onclick="ligar_bomba()">Ligar Bomba D'Agua</button>
+            <button class="botao-desliga" onclick="desligar_bomba()">Desligar Bomba D'Agua</button>
+        </div>
+
+        <div class="niveis">
+            <div class="nivel-turbidez">
+
+                %NIVEL_TURBIDEZ%
+            </div>
+            <div class="nivel-agua">
+
+                %NIVEL_AGUA%
+            </div>
+        </div>
+    </div>
+    <script>function ligar_bomba() {
+        alert("A bomba d'agua foi ligada");
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/?ligar=true");
+            xhr.send();
+        }
+        function desligar_bomba() {
+            alert("A bomba d'agua foi desligada")
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "/?ligar=false");
+            xhr.send();
+        }
+    </script>
+
+
+</body>
+
+</html>

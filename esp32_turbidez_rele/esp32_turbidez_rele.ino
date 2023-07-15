@@ -8,10 +8,9 @@
 #include "freertos/task.h"
 
 
-#define WIFI_NOME "OI"
-#define WIFI_SENHA "12345678j"
-#define AP_NOME "ESP_32_PROJECT"
-#define AP_SENHA "123456789"
+
+#define WIFI_NOME "ESP_32_PROJECT"
+#define WIFI_SENHA "123456789"
 #define TEMPO_ESPERA_MAXIMO_WIFI 20000
 #define TEMPO_DELAY_TASK 3000
 
@@ -24,6 +23,12 @@ FirebaseAuth auth;
 FirebaseConfig config;
 AsyncWebServer server(80);
 
+IPAddress local_IP(192, 168, 4, 100);
+// Set your Gateway IP address
+IPAddress gateway(192, 168, 1, 1);
+
+IPAddress subnet(255, 255, 0, 0);
+
 
 
 
@@ -35,27 +40,16 @@ int nivel_turbidez = 0;
 void setup() {
   Serial.begin(115200);
   pinMode(TURB, INPUT);
-  WiFi.mode(WIFI_MODE_APSTA);
 
   xTaskCreatePinnedToCore(conectar_wifi, "conectar_wifi", 2048, NULL, 5, NULL, 1);
-  xTaskCreatePinnedToCore(criar_ap, "conectar AP", 2048, NULL, 5, NULL, 0);
 
-  xTaskCreatePinnedToCore(conectar_firebase, "Conectar ao firebase", 10000, NULL, 4, NULL, 0);
+  xTaskCreatePinnedToCore(criar_server, "criar servidor", 2048, NULL, 5, NULL, 0);
+
   xTaskCreatePinnedToCore(receber_nivel_turbidez, "receber turbidez", 10000, NULL, 1, NULL, 1);
-  xTaskCreatePinnedToCore(enviar_fb_nivel_turbidez, "Envia Turbidez", 10000, NULL, 2, NULL, 0);
 }
 
 void loop() {
   // Nada aqui, volte mais tarde!!
-}
-
-void enviar_fb_nivel_turbidez(void* params) {
-  while (1) {
-    if (Firebase.ready() && WiFi.status() == WL_CONNECTED) {
-      Serial.printf("Set Turbidez... %s\n", Firebase.RTDB.setInt(&fbdo, F("/nivel_turbidez/"), nivel_turbidez) ? "Turbidez enviada para o FB" : fbdo.errorReason().c_str());
-    }
-    vTaskDelay(TEMPO_DELAY_TASK);
-  }
 }
 
 void receber_nivel_turbidez(void* params) {
@@ -74,32 +68,14 @@ void receber_nivel_turbidez(void* params) {
       nivel_turbidez = map(2100, 400, 2100, 100, 0);
     }
     vTaskDelay(500);
+
+    for (int i = 0; i < 100; i++) {
+      nivel_turbidez = i;
+      vTaskDelay(3000);
+    }
   }
 }
 
-void conectar_firebase(void* params) {
-  while (1) {
-    if (WiFi.status() == WL_CONNECTED && !Firebase.ready()) {
-      Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
-      /* Assign the api key (required) */
-      config.api_key = API_KEY;
-      /* Assign the user sign in credentials */
-      auth.user.email = FIREBASE_EMAIL;
-      auth.user.password = FIREBASE_SENHA;
-      /* Assign the RTDB URL (required) */
-      config.database_url = DATABASE_URL;
-      /* Assign the callback function for the long running token generation task */
-      config.token_status_callback = tokenStatusCallback;  // see addons/TokenHelper.h
-      fbdo.setResponseSize(2048);
-      Firebase.begin(&config, &auth);
-      Firebase.reconnectWiFi(false);
-      Firebase.setDoubleDigits(5);
-      config.timeout.serverResponse = 1000;
-      vTaskSuspend(NULL);
-    }
-    vTaskDelay(1000);
-  }
-}
 
 void conectar_wifi(void* params) {
   while (1) {
@@ -109,6 +85,11 @@ void conectar_wifi(void* params) {
     }
     WiFi.disconnect();
     Serial.print("Conectando-se ao WiFi");
+
+
+    if (!WiFi.config(local_IP, gateway, subnet)) {
+    Serial.println("STA Failed to configure");
+  }
     WiFi.begin(WIFI_NOME, WIFI_SENHA);
 
 
@@ -125,17 +106,18 @@ void conectar_wifi(void* params) {
     Serial.println("");
     Serial.println("Conectado!!");
     Serial.print("Connected com IP: ");
-    Serial.println();
+    Serial.println(WiFi.localIP());
   }
 }
 
-void criar_ap(void* params) {
-  while (1) {
-  
-    WiFi.softAP(AP_NOME, AP_SENHA);
-    Serial.println("OH MDS OBG CHATGPT");
+void criar_server(void* params) {
 
-    vTaskDelay(60000);
+  while (1) {
+    server.on("/nivel_turbidez", HTTP_GET, [](AsyncWebServerRequest* request) {
+      request->send_P(200, "text/plain", String(nivel_turbidez).c_str());
+    });
+    server.begin();
+    vTaskDelay(50000);
     vTaskDelete(NULL);
   }
 }
