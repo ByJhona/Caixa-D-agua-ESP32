@@ -3,8 +3,6 @@
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>
 #include <addons/RTDBHelper.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "time.h"
 #include "ESPAsyncWebServer.h"
 #include <HTTPClient.h>
@@ -40,12 +38,11 @@ const int daylightOffset_sec = 0;
 // GLOBAIS
 float nivel_agua = 0.0;
 int nivel_turbidez = 0;
-bool estado_bomba = false;
+bool estado_rele = false;
 String data_hora = " ";
 const char* serverNameTurb = "http://192.168.4.100/nivel_turbidez";
 
 const char html[] PROGMEM = R"rawliteral( 
-
 <!DOCTYPE html>
 <html>
 
@@ -53,7 +50,6 @@ const char html[] PROGMEM = R"rawliteral(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="refresh" content="2">
-
     <title>SAAF</title>
 </head>
 <style>
@@ -91,7 +87,7 @@ const char html[] PROGMEM = R"rawliteral(
         margin-bottom: 1rem;
         display: flex;
         flex-direction: row;
-        
+
         justify-content: space-between;
     }
 
@@ -138,7 +134,7 @@ const char html[] PROGMEM = R"rawliteral(
     .nivel-agua {
         display: flex;
         align-items: center;
-        
+
         font-size: 10rem;
         width: 30vw;
         height: 16rem;
@@ -171,25 +167,26 @@ const char html[] PROGMEM = R"rawliteral(
         }
 
         .nivel-agua {
-        
-        width: 70vw;
-        
-        
-    }
-    .botoes {
-        
-        display: flex;
-        flex-direction: row;
-        width: 70vw;
-        justify-content: space-between;
-        
-    }
 
-    .nivel-turbidez {
-        
-        width: 70vw;
-        
-    }
+            width: 70vw;
+
+
+        }
+
+        .botoes {
+
+            display: flex;
+            flex-direction: row;
+            width: 70vw;
+            justify-content: space-between;
+
+        }
+
+        .nivel-turbidez {
+
+            width: 70vw;
+
+        }
     }
 </style>
 
@@ -203,8 +200,8 @@ const char html[] PROGMEM = R"rawliteral(
     <div class="info">
         <div class="botoes">
 
-            <button class="botao-liga" onclick="ligar_bomba()">Ligar Bomba</button>
-            <button class="botao-desliga" onclick="desligar_bomba()">Desligar Bomba</button>
+            <button class="botao-liga" onclick="ligar_bomba()">Ligar Bomba D'Agua</button>
+            <button class="botao-desliga" onclick="desligar_bomba()">Desligar Bomba D'Agua</button>
         </div>
 
         <div class="niveis">
@@ -216,18 +213,16 @@ const char html[] PROGMEM = R"rawliteral(
 
                 %NIVEL_AGUA%
             </div>
-
         </div>
-
-
-
     </div>
     <script>function ligar_bomba() {
+            
             var xhr = new XMLHttpRequest();
             xhr.open("GET", "/?ligar=true");
             xhr.send();
         }
         function desligar_bomba() {
+            
             var xhr = new XMLHttpRequest();
             xhr.open("GET", "/?ligar=false");
             xhr.send();
@@ -262,16 +257,22 @@ void loop() {
   receber_sensor_nivel_turbidez();
   verificar_maximo_caixa();
   receber_data_hora();
+  receber_fb_estado_rele();
   if (WiFi.status() == WL_CONNECTED) {
     enviar_fb_nivel_agua();
     enviar_fb_nivel_turbidez();
+    enviar_fb_estado_rele();
   }
 
   delay(1000);
 }
 
 
-
+void receber_fb_estado_rele(){
+   if (Firebase.ready() && WiFi.status() == WL_CONNECTED) {
+    Serial.printf("Get Rele... %s\n", Firebase.RTDB.getBool(&fbdo, F("/estado_rele/"), &estado_rele) ? "Estado do rele atualizado" : fbdo.errorReason().c_str());
+  }
+}
 
 void enviar_fb_nivel_agua() {
 
@@ -280,8 +281,15 @@ void enviar_fb_nivel_agua() {
   }
 }
 
+void enviar_fb_estado_rele() {
+
+  if (Firebase.ready() && WiFi.status() == WL_CONNECTED) {
+    Serial.printf("Set Agua... %s\n", Firebase.RTDB.setBool(&fbdo, F("/estado_rele/"), estado_rele) ? "Agua enviada para o FB" : fbdo.errorReason().c_str());
+  }
+}
+
 void enviar_fb_nivel_turbidez() {
-  if (Firebase.ready() && data_hora != " " && WiFi.status() == WL_CONNECTED) {
+  if (Firebase.ready() && WiFi.status() == WL_CONNECTED) {
     Serial.printf("Set Turbidez... %s\n", Firebase.RTDB.setInt(&fbdo, F("/nivel_turbidez/"), nivel_turbidez) ? "Turbidez enviada para o FB" : fbdo.errorReason().c_str());
   }
 }
@@ -306,9 +314,9 @@ void receber_sensor_nivel_turbidez() {
 
 void verificar_maximo_caixa() {
 
-  if (nivel_agua >= MAX_LITROS && estado_bomba == true) {
-    estado_bomba = false;
-    Serial.printf("Set MAX... %s\n", Firebase.RTDB.setBool(&fbdo, F("/estado_bomba/"), estado_bomba) ? "Turbidez enviada para o FB" : fbdo.errorReason().c_str());
+  if (nivel_agua >= MAX_LITROS && estado_rele == true) {
+    estado_rele = false;
+    Serial.printf("Set MAX... %s\n", Firebase.RTDB.setBool(&fbdo, F("/estado_rele/"), estado_rele) ? "Turbidez enviada para o FB" : fbdo.errorReason().c_str());
   }
 }
 
@@ -379,16 +387,20 @@ void criar_server() {
       String input = request->getParam("ligar")->value();
       Serial.println(input);
       if (input == "true") {
-        estado_bomba = true;
+        estado_rele = true;
       } else if (input == "false") {
-        estado_bomba = false;
+        estado_rele = false;
       }
     }
     request->send_P(200, "text/html", html, processor);
   });
 
-  server.on("/estado_bomba", HTTP_GET, [](AsyncWebServerRequest* request) {
-    request->send_P(200, "text/plain", String(estado_bomba).c_str());
+  server.on("/estado_rele", HTTP_GET, [](AsyncWebServerRequest* request) {
+    request->send_P(200, "text/plain", String(estado_rele).c_str());
+  });
+
+  server.on("/estado_rele", HTTP_GET, [](AsyncWebServerRequest* request) {
+    request->send_P(200, "text/plain", String(estado_rele).c_str());
   });
   server.begin();
   delay(1000);

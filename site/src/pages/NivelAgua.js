@@ -25,7 +25,7 @@ export const options = {
       min: 0
     }
   },
-  chartArea: { width: "80%", height: "60%" },
+  chartArea: { width: "60%", height: "40%" },
 
 };
 
@@ -88,7 +88,8 @@ export default function NivelAgua() {
   return (
     <>
 
-      <form >
+      <form style={{backgroundColor: "white"}}>
+      <h2 style={{fontSize: '1rem', marginLeft: '1rem'}}>Filtrar por dia:</h2>
         <input type="checkbox" onChange={() => setHistorico(!historico)} />
 
 
@@ -105,6 +106,7 @@ export default function NivelAgua() {
           })}
 
         </select>
+        
       </form>
 
       {console.log(historico)}

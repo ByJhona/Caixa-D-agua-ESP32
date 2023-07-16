@@ -10,7 +10,12 @@
     justify-content: center;
 }
 
+html{
+    
+    background-color: rgba(0, 255, 255, 0.466);
+}
+
 body{
-    height: 50%;
+    height: 100%;
     
 }

@@ -1,23 +1,6 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="refresh" content="2"><title>SAAF</title>
-</head>
-<style>
-    * {
-        color: #433939;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-        justify-content: center;
-    }
-
-    body {
-
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 95vw;
-        background-size: auto;
-        background-color: rgb(247, 247, 247);
-    }
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="refresh" content="2"><title>SAAF</title></head>
+<style>* {color: #433939;box-sizing: border-box;margin: 0;padding: 0;justify-content: center;}
+body {display: flex;flex-direction: column;align-items: center;width: 95vw;background-size: auto;background-color: rgb(247, 247, 247);}
 
     .nav {
         width: 90vw;
@@ -35,7 +18,7 @@
         margin-bottom: 1rem;
         display: flex;
         flex-direction: row;
-        
+
         justify-content: space-between;
     }
 
@@ -82,7 +65,7 @@
     .nivel-agua {
         display: flex;
         align-items: center;
-        
+
         font-size: 10rem;
         width: 30vw;
         height: 16rem;
@@ -115,25 +98,26 @@
         }
 
         .nivel-agua {
-        
-        width: 70vw;
-        
-        
-    }
-    .botoes {
-        
-        display: flex;
-        flex-direction: row;
-        width: 70vw;
-        justify-content: space-between;
-        
-    }
 
-    .nivel-turbidez {
-        
-        width: 70vw;
-        
-    }
+            width: 70vw;
+
+
+        }
+
+        .botoes {
+
+            display: flex;
+            flex-direction: row;
+            width: 70vw;
+            justify-content: space-between;
+
+        }
+
+        .nivel-turbidez {
+
+            width: 70vw;
+
+        }
     }
 </style>
 
@@ -163,13 +147,13 @@
         </div>
     </div>
     <script>function ligar_bomba() {
-        alert("A bomba d'agua foi ligada");
+            alert("A bomba d'agua foi ligada");
             var xhr = new XMLHttpRequest();
             xhr.open("GET", "/?ligar=true");
             xhr.send();
         }
         function desligar_bomba() {
-            alert("A bomba d'agua foi desligada")
+            alert("A bomba d'agua foi desligada");
             var xhr = new XMLHttpRequest();
             xhr.open("GET", "/?ligar=false");
             xhr.send();

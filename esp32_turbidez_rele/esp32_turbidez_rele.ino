@@ -4,9 +4,7 @@
 #include <Firebase_ESP_Client.h>
 #include <addons/TokenHelper.h>
 #include <addons/RTDBHelper.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-
+#include <HTTPClient.h>
 
 
 #define WIFI_NOME "ESP_32_PROJECT"
@@ -36,88 +34,122 @@ IPAddress subnet(255, 255, 0, 0);
 
 // GLOBAIS
 int nivel_turbidez = 0;
+bool estado_rele = false;
+const char* serverNameRele = "http://192.168.4.1/estado_rele";
+
 
 void setup() {
   Serial.begin(115200);
   pinMode(TURB, INPUT);
 
-  xTaskCreatePinnedToCore(conectar_wifi, "conectar_wifi", 2048, NULL, 5, NULL, 1);
+  conectar_wifi();
 
-  xTaskCreatePinnedToCore(criar_server, "criar servidor", 2048, NULL, 5, NULL, 0);
-
-  xTaskCreatePinnedToCore(receber_nivel_turbidez, "receber turbidez", 10000, NULL, 1, NULL, 1);
+  criar_server();
 }
 
 void loop() {
-  // Nada aqui, volte mais tarde!!
+  receber_nivel_turbidez();
+  if (WiFi.status() == WL_CONNECTED) {
+
+
+    receber_estado_rele();
+    verificar_estado_rele();
+  } else {
+    emergencia();
+    conectar_wifi();
+  }
+  delay(100);
 }
 
-void receber_nivel_turbidez(void* params) {
-  while (1) {
-    int media_turb = 0;
-    for (int i = 0; i < 100; i++) {
-      media_turb += analogRead(TURB);
-    }
-    media_turb /= 100;
+void emergencia() {
+  Serial.println("Wifi esta desconectado.");
+  estado_rele = false;
+}
+void receber_estado_rele() {
+  String input = httpGETRequest(serverNameRele);
+  if (input == "0") {
+    estado_rele = false;
+  } else if (input == "1") {
+    estado_rele = true;
+  }
+  Serial.println(estado_rele);
+}
 
-    if (media_turb >= 400 && media_turb <= 2100) {
-      nivel_turbidez = map(media_turb, 400, 2100, 100, 0);
-    } else if (media_turb < 400) {
-      nivel_turbidez = map(400, 400, 2100, 100, 0);
-    } else if (media_turb > 2100) {
-      nivel_turbidez = map(2100, 400, 2100, 100, 0);
-    }
-    vTaskDelay(500);
-
-    for (int i = 0; i < 100; i++) {
-      nivel_turbidez = i;
-      vTaskDelay(3000);
-    }
+void verificar_estado_rele() {
+  if (estado_rele) {
+    Serial.println("Liga a bomba");
+  } else {
+    Serial.println("Desliga a bomba");
   }
 }
 
+void receber_nivel_turbidez() {
+  int media_turb = 0;
+  for (int i = 0; i < 100; i++) {
+    media_turb += analogRead(TURB);
+  }
+  media_turb /= 100;
 
-void conectar_wifi(void* params) {
-  while (1) {
-    if (WiFi.status() == WL_CONNECTED) {
-      vTaskDelay(100 / portTICK_PERIOD_MS);
-      continue;
-    }
-    WiFi.disconnect();
-    Serial.print("Conectando-se ao WiFi");
+  if (media_turb >= 400 && media_turb <= 2100) {
+    nivel_turbidez = map(media_turb, 400, 2100, 100, 0);
+  } else if (media_turb < 400) {
+    nivel_turbidez = map(400, 400, 2100, 100, 0);
+  } else if (media_turb > 2100) {
+    nivel_turbidez = map(2100, 400, 2100, 100, 0);
+  }
+}
 
-
-    if (!WiFi.config(local_IP, gateway, subnet)) {
+void conectar_wifi() {
+  WiFi.disconnect();
+  Serial.print("Conectando-se ao WiFi");
+  if (!WiFi.config(local_IP, gateway, subnet)) {
     Serial.println("STA Failed to configure");
   }
-    WiFi.begin(WIFI_NOME, WIFI_SENHA);
+  WiFi.begin(WIFI_NOME, WIFI_SENHA);
 
-
-    unsigned long TEMPO_ESPERA_ATUAL_WIFI = millis();
-    // Essa função while pode ficar em loop, tentar limitar com um tempo limite
-    while (WiFi.status() != WL_CONNECTED && (millis() - TEMPO_ESPERA_ATUAL_WIFI < TEMPO_ESPERA_MAXIMO_WIFI)) {
-      vTaskDelay(100 / portTICK_PERIOD_MS);
-      Serial.print('.');
-    }
-    if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("Não foi possivel conectar!!");
-      continue;
-    }
-    Serial.println("");
-    Serial.println("Conectado!!");
-    Serial.print("Connected com IP: ");
-    Serial.println(WiFi.localIP());
+  unsigned long TEMPO_ESPERA_ATUAL_WIFI = millis();
+  // Essa função while pode ficar em loop, tentar limitar com um tempo limite
+  while (WiFi.status() != WL_CONNECTED && (millis() - TEMPO_ESPERA_ATUAL_WIFI < TEMPO_ESPERA_MAXIMO_WIFI)) {
+    delay(1000);
+    Serial.print('.');
   }
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Não foi possivel conectar!!");
+    return;
+  }
+  Serial.println("Conectado!!");
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
 }
 
-void criar_server(void* params) {
+void criar_server() {
+  server.on("/nivel_turbidez", HTTP_GET, [](AsyncWebServerRequest* request) {
+    request->send_P(200, "text/plain", String(nivel_turbidez).c_str());
+  });
+  server.begin();
+}
 
-  while (1) {
-    server.on("/nivel_turbidez", HTTP_GET, [](AsyncWebServerRequest* request) {
-      request->send_P(200, "text/plain", String(nivel_turbidez).c_str());
-    });
-    server.begin();
-    vTaskDelay(50000);
-    vTaskDelete(NULL);
+String httpGETRequest(const char* serverName) {
+  WiFiClient client;
+  HTTPClient http;
+
+  // Your Domain name with URL path or IP address with path
+  http.begin(client, serverName);
+
+  // Send HTTP POST request
+  int httpResponseCode = http.GET();
+
+  String payload = "--";
+
+  if (httpResponseCode > 0) {
+
+    payload = http.getString();
+  } else {
+    Serial.print("Error code: ");
+    Serial.println(httpResponseCode);
   }
+  // Free resources
+  http.end();
+
+  return payload;
 }

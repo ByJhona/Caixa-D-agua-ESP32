@@ -7,21 +7,21 @@ import { getDatabase, ref, onValue, update } from "firebase/database";
 
 export default function Dashboard() {
 
-  const [estadoBomba, setEstadoBomba] = useState(false);
+  const [estadoRele, setEstadoRele] = useState(false);
 
   useEffect(() => {
-    const estadoBombaRef = ref(getDatabase());
-    update(estadoBombaRef, { estado_bomba: estadoBomba })
+    const estadoReleRef = ref(getDatabase());
+    update(estadoReleRef, { estado_rele: estadoRele })
     console.log("TESTE")
 
-  }, [estadoBomba]);
+  }, [estadoRele]);
 
   useEffect(() => {
-    const estadoBombaRef = ref(getDatabase(), '/estado_bomba/');
-    onValue(estadoBombaRef, (snapshot) => {
+    const estadoReleRef = ref(getDatabase(), '/estado_rele/');
+    onValue(estadoReleRef, (snapshot) => {
       const snap = snapshot.val();
       if(snapshot.exists()) {
-        setEstadoBomba(snap);
+        setEstadoRele(snap);
         console.log(snap);
 
         return;
@@ -52,12 +52,12 @@ export default function Dashboard() {
         <div className={styles.grafico2}>
 
 
-          {estadoBomba ? <button className={styles.botaoDesliga} onClick={() => setEstadoBomba(!estadoBomba)}>DESLIGAR A BOMBA</button>
-            : <button className={styles.botaoLiga} onClick={() => setEstadoBomba(!estadoBomba)}>LIGAR A BOMBA</button>
+          {estadoRele ? <button className={styles.botaoDesliga} onClick={() => setEstadoRele(!estadoRele)}>DESLIGAR A rele</button>
+            : <button className={styles.botaoLiga} onClick={() => setEstadoRele(!estadoRele)}>LIGAR A BOMBA</button>
           }
           
           <div className={styles.nivelturbidez}>
-            {estadoBomba ? <NivelTurbidez /> : <h2>A bomba esta desligada</h2>}
+            {estadoRele ? <NivelTurbidez /> : <h2>A bomba esta desligada</h2>}
           </div>
 
         </div>
